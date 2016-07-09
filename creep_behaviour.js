@@ -417,66 +417,6 @@ module.exports = {
         }
     },
 
-    testupgrader: function(creep){
-        //----------------------------------------------------------------------
-        // get energy
-        if(creep.carry.energy == 0){
-
-            //------------------------------------------------------------------
-            // find structures that can store energy
-            var filled_containers = creep.room.find(FIND_STRUCTURES, {
-                filter: obj => obj.structureType == STRUCTURE_CONTAINER &&
-                        obj.store.energy >= 50
-            });
-
-            var filled_storages = creep.room.find(FIND_STRUCTURES, {
-                filter: obj => obj.structureType == STRUCTURE_STORAGE &&
-                        obj.store.energy >= 50
-            });
-
-            //------------------------------------------------------------------
-            // choose energy source and get energy
-
-            var energy_source = null;
-
-            // TODO: choose source with the shortest distance
-            if(filled_containers.length){
-                energy_source = filled_containers[0];
-            }
-            else if(filled_storages.length){
-                energy_source = filled_storages[0];
-            }
-
-            if(energy_source){
-                if(energy_source.structureType == STRUCTURE_SPAWN){
-                    if(energy_source.transferEnergy(creep) == ERR_NOT_IN_RANGE) {
-                        creep.moveTo(energy_source);
-                    }
-                }
-                else{
-                    if(energy_source.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
-                        creep.moveTo(energy_source);
-                    }
-                }
-            }
-            else{
-                if(Game.spawns.Spawn1.energy > 200 && Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
-                    creep.moveTo(Game.spawns.Spawn1);
-                }
-            }
-        }
-        //----------------------------------------------------------------------
-        // upgrade controller
-        else{
-            var room_controller = creep.room.controller;
-
-
-            if(creep.upgradeController(room_controller) == ERR_NOT_IN_RANGE) {
-                creep.moveTo(Game.flags.up1.pos);
-            }
-        }
-    },
-
     energyProvider: function(creep){
         var towers = structureFinder.findTowers();
         towers.sort(function(a,b){return creep.pos.getRangeTo(a)- creep.pos.getRangeTo(b);});
