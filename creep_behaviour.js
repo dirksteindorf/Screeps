@@ -1,0 +1,645 @@
+var structureFinder = require('find_structures');
+
+module.exports = {
+
+    //--------------------------------------------------------------------------
+    // basic infrastructure
+    harvester: function(creep){
+
+        // pick up energy
+        if(creep.carry.energy < creep.carryCapacity){
+
+            var res = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+
+            // miners sometimes drop a little energy
+            // harvesters should only stop mining when the amount is big enough
+            if(res){
+                if(res.resourceType == RESOURCE_ENERGY && res.amount < 10){
+                    if(creep.pos.isNearTo(res.pos)){
+                        creep.pickup(res);
+                    }
+                }
+                else if(creep.pickup(res) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(res.pos);
+                }
+            }
+            // otherwise find sources
+            else{
+                var sources = creep.pos.findClosestByRange(FIND_SOURCES);
+                //var sources = creep.room.find(FIND_SOURCES);
+                //var current_source = 1;
+
+                //if(creep.harvest(sources[current_source]) == ERR_NOT_ENOUGH_RESOURCES){
+                //    current_source++;
+                //}
+
+                if(creep.harvest(sources) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(sources);
+                }
+                //if(creep.harvest(sources[current_source]) == ERR_NOT_IN_RANGE) {
+                //    creep.moveTo(sources[current_source]);
+                //}
+            }
+
+        }
+
+        // deliver energy to different storage units
+        else{
+            var empty_extensions = structureFinder.findEmptyExtensions();
+
+            // first: try to fill Extensions
+            if(empty_extensions.length){
+                // sort them by distance to the creep
+                empty_extensions.sort(function(a,b){
+                    return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
+                });
+
+                // move to the closest
+                if(creep.transfer(empty_extensions[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(empty_extensions[0])
+                }
+            }
+            else{
+                // second: try to fill spawns
+                var empty_spawns = structureFinder.findEmptySpawns();
+
+                if(empty_spawns.length){
+                    if(creep.transfer(empty_spawns[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                        creep.moveTo(empty_spawns[0]);
+                    }
+                }
+
+                // third: try to fill Storages
+                else{
+                    var empty_storages = structureFinder.findEmptyStorages();
+                    if(empty_storages.length){
+                        // sort them by distance to the creep
+                        empty_storages.sort(function(a,b){
+                            return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
+                        });
+
+                        // move to the closest
+                        if(creep.transfer(empty_storages[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                            creep.moveTo(empty_storages[0])
+                        }
+                    }
+
+                    // at last: try to fill Containers
+                    else{
+                        var empty_containers = structureFinder.findEmptyContainers();
+                        if(empty_containers.length){
+                            // sort them by distance to the creep
+                            empty_containers.sort(function(a,b){
+                                return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
+                            });
+
+                            // move to the closest
+                            if(creep.transfer(empty_containers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                                creep.moveTo(empty_containers[0])
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+
+    builder: function(creep){
+        //----------------------------------------------------------------------
+        // get energy
+        if(creep.carry.energy == 0){
+            //------------------------------------------------------------------
+            // get structures with at least 50 energy in them
+            var filled_containers = structureFinder.findFilledContainers();
+
+
+            var energy_source = null;
+
+            if(filled_containers.length){
+                energy_source = filled_containers[0];
+            }
+            else {
+                var filled_storages = structureFinder.findFilledStorages();
+
+                if(filled_storages.length){
+                    energy_source = filled_storages[0];
+                }
+            }
+
+            if(energy_source){
+                if(energy_source.structureType == STRUCTURE_CONTAINER ||
+                    energy_source.structureType == STRUCTURE_STORAGE){
+                    if(energy_source.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                        creep.moveTo(energy_source);
+                    }
+                }
+                else{
+                    if(energy_source.transferEnergy(creep) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(energy_source);
+                    }
+                }
+            }
+            else{
+                if(Game.spawns.Spawn1.energy > 200 && Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(Game.spawns.Spawn1);
+                }
+            }
+        }
+
+        //----------------------------------------------------------------------
+        // build stuff
+        else{
+            var c_site = creep.pos.findClosestByRange(FIND_CONSTRUCTION_SITES);
+            var room_controller = creep.room.controller;
+
+            if(c_site){
+                if(creep.build(c_site) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(c_site);
+                }
+            }
+        }
+    },
+
+    gatherer: function(creep){
+        /*
+         * CARRY, CARRY, CARRY, MOVE, MOVE, MOVE
+         * store source and spawn
+         * simply collect energy until bag is full
+         * transport to spawn if there's room
+         * otherwise transport to extensions
+         * otherwise transport to container
+         */
+
+         /* old stuff
+            var res = creep.pos.findClosestByRange(FIND_DROPPED_RESOURCES);
+
+        // TODO: extend this, so all structures with free capacity are found
+        var cont = creep.room.find(FIND_STRUCTURES, {
+                    filter: {structureType : STRUCTURE_CONTAINER}
+                });
+        var empty_cont = [];
+        for(var i in cont){
+            if(_.sum(cont[i].store) < cont[i].storeCapacity){
+                empty_cont.push(cont[i]);
+            }
+        }
+        var empty_ext = [];
+        var ext = creep.room.find(FIND_STRUCTURES, {
+                    filter: { structureType : STRUCTURE_EXTENSION}
+                });
+        for(var i in ext){
+            if(ext[i].energy < ext[i].energyCapacity){
+                empty_ext.push(ext[i]);
+            }
+        }
+
+        var stash = Game.spawns.Spawn1;
+
+        if(empty_ext.length){
+            for(var i in empty_ext){
+                if(empty_ext[i].energy < empty_ext[i].energyCapacity){
+                    stash = empty_ext[i];
+                }
+            }
+        }
+
+        else if(empty_cont.length){
+            for(var i in empty_cont){
+                if(_.sum(empty_cont[i].store) < empty_cont[i].storeCapacity){
+                    stash = empty_cont[i];
+                }
+            }
+        }
+
+        if(res){
+            if(creep.pickup(res) == ERR_NOT_IN_RANGE){
+                creep.moveTo(res);
+            }
+            else if(creep.pickup(res) == ERR_FULL){
+                for(var resourceType in creep.carry) {
+                    if(creep.transfer(stash, resourceType) == ERR_NOT_IN_RANGE){
+                        creep.moveTo(stash);
+                    }
+                }
+            }
+        }
+        else{
+            if(creep.carry.energy < creep.carryCapacity){
+                var sources = creep.room.find(FIND_SOURCES);
+                var current_source = 1;
+
+                if(creep.harvest(sources[current_source]) == ERR_NOT_ENOUGH_RESOURCES){
+                    current_source++;
+                }
+                if(creep.harvest(sources[current_source]) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(sources[current_source]);
+                }
+
+            }
+            else{
+                if(creep.transfer(stash, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(stash);
+                }
+            }
+
+            //for(var resourceType in creep.carry) {
+            //    if(creep.transfer(stash, resourceType) == ERR_NOT_IN_RANGE){
+            //        creep.moveTo(stash);
+            //    }
+            //}
+
+        }
+        */
+    },
+
+    chain0: function(creep){
+        if(creep.carry.energy > 0){
+            creep.transfer(Game.spawns.Spawn1, RESOURCE_ENERGY);
+        }
+        else if(creep.pos != Game.flags.Chain0.pos){
+            creep.moveTo(Game.flags.Chain0.pos);
+        }
+    },
+
+    chain1: function(creep){
+        if(creep.carry.energy > 0){
+            creep.transfer(Game.creeps.Chain0, RESOURCE_ENERGY);
+        }
+        else if(creep.pos.x != Game.flags.Chain1.pos){
+            creep.moveTo(Game.flags.Chain1.pos);
+        }
+    },
+
+    chain2: function(creep){
+        if(creep.carry.energy > 0){
+            creep.transfer(Game.creeps.Chain1, RESOURCE_ENERGY);
+        }
+        else if(creep.pos.x != Game.flags.Chain2.pos){
+            creep.moveTo(Game.flags.Chain2.pos);
+        }
+    },
+
+    chain3: function(creep){
+        if(creep.carry.energy > 0){
+            creep.transfer(Game.creeps.Chain2, RESOURCE_ENERGY);
+        }
+        else if(creep.pos.x != Game.flags.Chain3.pos){
+            creep.moveTo(Game.flags.Chain3.pos);
+        }
+    },
+
+    miner0 : function(creep){
+        if(creep.carry.energy == creep.carryCapacity){
+            creep.transfer(Game.creeps.Chain3, RESOURCE_ENERGY);
+        }
+        else{
+            var source = Game.flags.Miner0.pos.findClosestByRange(FIND_SOURCES);
+            if(!creep.pos.isEqualTo(Game.flags.Miner0.pos)){
+                creep.moveTo(Game.flags.Miner0);
+            }
+            else{
+                var harvest_return = creep.harvest(source);
+                if(harvest_return == ERR_NOT_FOUND ||
+                    harvest_return == ERR_INVALID_TARGET ||
+                    harvest_return == ERR_NOT_IN_RANGE ||
+                    harvest_return == ERR_NO_BODYPART){
+                        Game.notify("Miner0 has problems.");
+                    }
+            }
+        }
+    },
+
+    miner1 : function(creep){
+        if(creep.carry.energy == creep.carryCapacity){
+            creep.transfer(Game.creeps.Chain3, RESOURCE_ENERGY);
+        }
+        else{
+            var source = Game.flags.Miner1.pos.findClosestByRange(FIND_SOURCES);
+            if(!creep.pos.isEqualTo(Game.flags.Miner1.pos)){
+                creep.moveTo(Game.flags.Miner1);
+            }
+            else{
+                var harvest_return = creep.harvest(source);
+                if(harvest_return == ERR_NOT_FOUND ||
+                    harvest_return == ERR_INVALID_TARGET ||
+                    harvest_return == ERR_NOT_IN_RANGE ||
+                    harvest_return == ERR_NO_BODYPART){
+                        Game.notify("Miner1 has problems.");
+                    }
+            }
+        }
+    },
+
+    repairman: function(creep){
+        if(creep.carry.energy == 0){
+            if(Game.spawns.Spawn1.energy > 150 && Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
+                creep.moveTo(Game.spawns.Spawn1);
+            }
+        }
+        else{
+            var targets = creep.room.find(FIND_STRUCTURES, {
+                filter: object => (object.hits < 0.8 * object.hitsMax && object.structureType == STRUCTURE_CONTAINER) ||
+                        (object.hits < 30000 && object.structureType == STRUCTURE_RAMPART) ||
+                        (object.hits < 10000 && object.structureType == STRUCTURE_WALL)
+            });
+
+            // this is really confusing and not effective at all when walls are involved
+            //targets.sort((a,b) => a.hits - b.hits);
+
+            // move to closest
+            targets.sort((a,b) => creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b));
+
+            if(targets.length > 0) {
+                if(creep.repair(targets[0]) == ERR_NOT_IN_RANGE) {
+                    creep.moveTo(targets[0]);
+                }
+            }
+        }
+    },
+
+    upgrader: function(creep){
+        //----------------------------------------------------------------------
+        // get energy
+        if(creep.carry.energy == 0){
+
+            //------------------------------------------------------------------
+            // find structures that can store energy
+            var filled_containers = creep.room.find(FIND_STRUCTURES, {
+                filter: obj => obj.structureType == STRUCTURE_CONTAINER &&
+                        obj.store.energy >= 50
+            });
+
+            var filled_storages = creep.room.find(FIND_STRUCTURES, {
+                filter: obj => obj.structureType == STRUCTURE_STORAGE &&
+                        obj.store.energy >= 50
+            });
+
+            //------------------------------------------------------------------
+            // choose energy source and get energy
+
+            var energy_source = null;
+
+            // TODO: choose source with the shortest distance
+            if(filled_containers.length){
+                energy_source = filled_containers[0];
+            }
+            else if(filled_storages.length){
+                energy_source = filled_storages[0];
+            }
+
+            if(energy_source){
+                if(energy_source.structureType == STRUCTURE_SPAWN){
+                    if(energy_source.transferEnergy(creep) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(energy_source);
+                    }
+                }
+                else{
+                    if(energy_source.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(energy_source);
+                    }
+                }
+            }
+            else{
+                if(Game.spawns.Spawn1.energy > 200 && Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(Game.spawns.Spawn1);
+                }
+            }
+        }
+        //----------------------------------------------------------------------
+        // upgrade controller
+        else{
+            var room_controller = creep.room.controller;
+
+
+            if(creep.upgradeController(room_controller) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(Game.flags.up1.pos);
+            }
+        }
+    },
+
+    testupgrader: function(creep){
+        //----------------------------------------------------------------------
+        // get energy
+        if(creep.carry.energy == 0){
+
+            //------------------------------------------------------------------
+            // find structures that can store energy
+            var filled_containers = creep.room.find(FIND_STRUCTURES, {
+                filter: obj => obj.structureType == STRUCTURE_CONTAINER &&
+                        obj.store.energy >= 50
+            });
+
+            var filled_storages = creep.room.find(FIND_STRUCTURES, {
+                filter: obj => obj.structureType == STRUCTURE_STORAGE &&
+                        obj.store.energy >= 50
+            });
+
+            //------------------------------------------------------------------
+            // choose energy source and get energy
+
+            var energy_source = null;
+
+            // TODO: choose source with the shortest distance
+            if(filled_containers.length){
+                energy_source = filled_containers[0];
+            }
+            else if(filled_storages.length){
+                energy_source = filled_storages[0];
+            }
+
+            if(energy_source){
+                if(energy_source.structureType == STRUCTURE_SPAWN){
+                    if(energy_source.transferEnergy(creep) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(energy_source);
+                    }
+                }
+                else{
+                    if(energy_source.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE) {
+                        creep.moveTo(energy_source);
+                    }
+                }
+            }
+            else{
+                if(Game.spawns.Spawn1.energy > 200 && Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(Game.spawns.Spawn1);
+                }
+            }
+        }
+        //----------------------------------------------------------------------
+        // upgrade controller
+        else{
+            var room_controller = creep.room.controller;
+
+
+            if(creep.upgradeController(room_controller) == ERR_NOT_IN_RANGE) {
+                creep.moveTo(Game.flags.up1.pos);
+            }
+        }
+    },
+
+    energyProvider: function(creep){
+        var towers = structureFinder.findTowers();
+        towers.sort(function(a,b){return creep.pos.getRangeTo(a)- creep.pos.getRangeTo(b);});
+
+        if(creep.carry.energy == 0){
+            var filled_containers = structureFinder.findFilledContainers();
+            if(filled_containers.length){
+                if(filled_containers[0].transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(filled_containers[0]);
+                }
+            }
+            else if( ( (towers[0].energy < towers[0].energyCapacity && Game.spawns.Spawn1.energy >= 200) || (Game.spawns.Spawn1.energy == 300) ) &&
+                Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
+                creep.moveTo(Game.spawns.Spawn1);
+            }
+        }
+        else{
+            if(towers[0].energy == towers[0].energyCapacity){
+                var empty_storages = structureFinder.findEmptyEnergyStorages();
+
+                if(empty_storages.length){
+                    if(creep.transfer(empty_storages[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                        creep.moveTo(empty_storages[0]);
+                    }
+                }
+            }
+            else if(creep.transfer(towers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                creep.moveTo(towers[0]);
+            }
+        }
+    },
+
+
+    //==========================================================================
+    // fighting
+    guard: function(creep){
+        // find nearby enemies
+        var targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 10, {filter: function(i){
+                        return i.owner.username !== "Source Keeper";
+                    }});
+
+        if(targets.length){
+            // find closest enemy
+            targets.sort(function(a,b){
+                return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
+            });
+
+            if(creep.attack(targets[0]) == ERR_NOT_IN_RANGE){
+                creep.moveTo(targets[0]);
+            }
+        }
+        else{
+            creep.moveTo(Game.flags.Gather1);
+        }
+    },
+
+    healer: function(creep){
+        var target = creep.pos.findClosestByRange(FIND_MY_CREEPS, {
+            filter: function(object){
+                return object.hits < object.hitsMax;
+            }
+        });
+
+        if(target){
+            if(creep.heal(target) == ERR_NOT_IN_RANGE){
+                creep.moveTo(target);
+            }
+        }
+        else{
+            creep.moveTo(Game.flags.Gather1);
+        }
+    },
+
+    archer: function(creep){
+        var targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 10, {filter: function(i){
+                return i.owner.username !== "Source Keeper";
+        }});
+        var close_targets = creep.pos.findInRange(FIND_HOSTILE_CREEPS, 3, {filter: function(i){
+            return i.owner.username !== "Source Keeper";
+        }});
+        if(targets.length){
+            // find closest enemy
+            targets.sort(function(a,b){
+                return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
+            });
+
+            if(close_targets.length > 1){
+                creep.rangedMassAttack();
+            }
+            else if(creep.rangedAttack(targets[0]) == ERR_NOT_IN_RANGE){
+                creep.moveTo(targets[0]);
+            }
+        }
+        else{
+            creep.moveTo(Game.flags.Gather1);
+        }
+    },
+
+    claimer: function(creep){
+        var controllers = creep.room.find(FIND_STRUCTURES, {filter: {structureType: STRUCTURE_CONTROLLER}});
+
+        if(creep.claimController(controllers[0]) == ERR_NOT_IN_RANGE){
+            creep.moveTo(controllers[0]);
+        }
+    },
+
+    //==========================================================================
+    // let creeps do what they do
+    run: function(){
+        for(var i in Game.creeps){
+            var creep = Game.creeps[i];
+
+            if(creep.memory.role == "harvester"){
+                this.harvester(creep);
+            }
+            else if(creep.memory.role == "builder"){
+                this.builder(creep);
+            }
+            else if(creep.memory.role == "gatherer"){
+                this.gatherer(creep);
+            }
+            else if(creep.memory.role == "repairman"){
+                this.repairman(creep);
+            }
+            else if(creep.memory.role == "upgrader"){
+                this.upgrader(creep);
+            }
+            else if(creep.memory.role == "testupgrader"){
+                this.testupgrader(creep);
+            }
+            else if(creep.memory.role == "guard"){
+                this.guard(creep);
+            }
+            else if(creep.memory.role == "healer"){
+                this.healer(creep);
+            }
+            else if(creep.memory.role == "archer"){
+                this.archer(creep);
+            }
+            else if(creep.memory.role == "claimer"){
+                this.claimer(creep);
+            }
+            else if(creep.memory.role == "chain0"){
+                this.chain0(creep);
+            }
+            else if(creep.memory.role == "chain1"){
+                this.chain1(creep);
+            }
+            else if(creep.memory.role == "chain2"){
+                this.chain2(creep);
+            }
+            else if(creep.memory.role == "chain3"){
+                this.chain3(creep);
+            }
+            else if(creep.memory.role == "miner0"){
+                this.miner0(creep);
+            }
+            else if(creep.memory.role == "miner1"){
+                this.miner1(creep);
+            }
+            else if(creep.memory.role == "energyProvider"){
+                this.energyProvider(creep);
+            }
+        }
+    }
+}
