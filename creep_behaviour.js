@@ -467,7 +467,7 @@ module.exports = {
                     creep.moveTo(filled_containers[0]);
                 }
             }
-            else if( ( (towers[0].energy < towers[0].energyCapacity && Game.spawns.Spawn1.energy >= 200) || (Game.spawns.Spawn1.energy == 300) ) &&
+            else if( ( (towers[0].energy < towers[0].energyCapacity && Game.spawns.Spawn1.energy == 300) ) &&
                 Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
                 creep.moveTo(Game.spawns.Spawn1);
             }

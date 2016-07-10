@@ -70,15 +70,10 @@ module.exports = {
 
         // create repairmen when damaged structures are found and no tower exists
         // at the moment: 1 repairman for 5 damaged structures, but 4 at most
-        var damaged_structs = structureFinder.findDamagedStructures().length +
-                              structureFinder.findDamagedContainers().length +
-                              structureFinder.findWeakWalls().length;
-        else if(damaged_structs &&
+        else if((structureFinder.findDamagedStructures().length + structureFinder.findDamagedContainers().length +
+                structureFinder.findWeakWalls().length) > Memory.creepCount.repairman*5 && Memory.creepCount.repairman < 4 &&
                 !structureFinder.findTowers().length &&
-                damaged_structs > Memory.creepCount.repairman*5 &&
-                Memory.creepCount.repairman < 4 &&
-                Game.creeps.Miner1 &&
-                Game.spawns.Spawn1.room.energyAvailable >= 300){
+                Game.creeps.Miner1 && Game.spawns.Spawn1.room.energyAvailable >= 300){
                     Game.spawns.Spawn1.createCreep([WORK, CARRY, CARRY, MOVE, MOVE], "repairman"+Game.time, {role: "repairman"});
         }
 
