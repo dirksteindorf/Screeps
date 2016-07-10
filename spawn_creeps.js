@@ -7,7 +7,7 @@ module.exports = {
         // basic infrastructure on controller level 1
 
         // first harvesters as a foundation for the chain
-        if(Memory.creepCount.harvester < 2){
+        if(Memory.creepCount.harvester < 2 || Memory.creepCount.harvester < Game.rooms['W17S41'].memory.maxHarvesters){
             if(Game.spawns.Spawn1.room.controller.level >= 3 && Game.spawns.Spawn1.room.energyAvailable >= 500){
                 Game.spawns.Spawn1.createCreep([WORK, CARRY, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], "harvester"+Game.time, {role: "harvester", task: "harvesting"});
             }

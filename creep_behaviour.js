@@ -5,6 +5,16 @@ module.exports = {
     //--------------------------------------------------------------------------
     // basic infrastructure
     harvester: function(creep){
+
+        // make space for the next creep before dying
+        if(creep.ticksToLive <= 3){
+            for(var i = 0; i < Game.rooms.sources.length; i++){
+                if(creep.room.memory.sources[i].id == creep.memory.source){
+                    creep.room.memory.sources[i].harvesters -= 1;
+                }
+            }
+        }
+
         //--------------------------------------------------------------------------
         // harvesting behaviour
         if(creep.memory.task == "harvesting"){
@@ -17,9 +27,9 @@ module.exports = {
 
             // assign an energy source at the beginning
             if(typeof creep.memory.target === "undefined"){
-                var availableSources = creep.room.find(FIND_SOURCES);//, {
-                                //    filter: src => src.harvesters < src.maxHarvesters
-                                //});
+                var availableSources = creep.room.find(FIND_SOURCES, {
+                                    filter: src => src.harvesters < src.maxHarvesters
+                                });
 
                 availableSources.sort(function(a,b){
                     return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
@@ -27,7 +37,7 @@ module.exports = {
 
                 creep.memory.source = availableSources[0].id;
                 creep.memory.target = creep.memory.source;
-                //availableSources[0].memory.harvesters += 1;
+                availableSources[0].memory.harvesters += 1;
             }
 
             // harvest energy from the source
