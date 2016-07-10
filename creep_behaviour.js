@@ -378,7 +378,8 @@ module.exports = {
             var targets = creep.room.find(FIND_STRUCTURES, {
                 filter: object => (object.hits < 0.8 * object.hitsMax && object.structureType == STRUCTURE_CONTAINER) ||
                         (object.hits < 30000 && object.structureType == STRUCTURE_RAMPART) ||
-                        (object.hits < 10000 && object.hitsMax > 1 && object.structureType == STRUCTURE_WALL)
+                        (object.hits < 10000 && object.hitsMax > 1 && object.structureType == STRUCTURE_WALL) ||
+                        (object.hits < 2500 && object.structureType == STRUCTURE_ROAD)
             });
 
             // this is really confusing and not effective at all when walls are involved
