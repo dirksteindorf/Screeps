@@ -17,18 +17,18 @@ module.exports = {
         }
 
         // build chain
-        else if(Memory.creepCount.harvester == 2 && !Game.creeps.Chain0 && Game.spawns.Spawn1.room.energyAvailable >= 200){
+        else if(Memory.creepCount.harvester >= 2 && !Game.creeps.Chain0 && Game.spawns.Spawn1.room.energyAvailable >= 200){
             Game.spawns.Spawn1.createCreep([CARRY, CARRY, CARRY, MOVE], "Chain0", {role: "chain0"});
         }
-        else if(Memory.creepCount.harvester == 2 && Game.creeps.Chain0 && !Game.creeps.Chain1 &&
+        else if(Memory.creepCount.harvester >= 2 && Game.creeps.Chain0 && !Game.creeps.Chain1 &&
                 Game.spawns.Spawn1.room.energyAvailable >= 200){
             Game.spawns.Spawn1.createCreep([CARRY, CARRY, CARRY, MOVE], "Chain1", {role: "chain1"});
         }
-        else if(Memory.creepCount.harvester == 2 && Game.creeps.Chain1 && !Game.creeps.Chain2 &&
+        else if(Memory.creepCount.harvester >= 2 && Game.creeps.Chain1 && !Game.creeps.Chain2 &&
                 Game.spawns.Spawn1.room.energyAvailable >= 200){
             Game.spawns.Spawn1.createCreep([CARRY, CARRY, CARRY, MOVE], "Chain2", {role: "chain2"});
         }
-        else if(Memory.creepCount.harvester == 2 && Game.creeps.Chain2 && !Game.creeps.Chain3 &&
+        else if(Memory.creepCount.harvester >= 2 && Game.creeps.Chain2 && !Game.creeps.Chain3 &&
                 Game.spawns.Spawn1.room.energyAvailable >= 200){
             Game.spawns.Spawn1.createCreep([CARRY, CARRY, CARRY, MOVE], "Chain3", {role: "chain3"});
         }
