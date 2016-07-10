@@ -1,16 +1,18 @@
 module.exports = {
     update : function(){
         for(var r in Game.rooms){
+            var room = Game.rooms[r];
             //------------------------------------------------------------------
             // sources
-            var sources = r.find(FIND_SOURCES);
+            if(!room.memory.sources){
+                room.memory.sources = [];
+                var sources = room.find(FIND_SOURCES);
 
-            // only once, harvesters will be updated elsewhere
-            if(r.memory.sources.length != sources.length){
                 for(var s = 0; s < sources.length; s++){
-                    r.memory.sources[s].id = sources[s].id;
-                    r.memory.sources[s].harvesters = 0;
-                    r.memory.sources[s].maxHarvesters = 4;
+                    room.memory.sources[s] = {};
+                    room.memory.sources[s].id = sources[s].id;
+                    room.memory.sources[s].harvesters = 0;
+                    room.memory.sources[s].maxHarvesters = 4;
                 }
             }
 

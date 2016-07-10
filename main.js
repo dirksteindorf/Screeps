@@ -7,7 +7,7 @@ var structureBuilder = require('build_structures');
 //var roomStatistics  = require('room_stats');
 
 module.exports.loop = function () {
-
+    //roomStatistics.update();
     creepCounter.init();
     creepCounter.count();
     creepSpawner.spawn();
