@@ -4,6 +4,7 @@ var creepBehaviour   = require('creep_behaviour');
 var towerController  = require('tower_control');
 var structureBuilder = require('build_structures');
 //var structureFinder = require('find_structures');
+//var roomStatistics  = require('room_stats');
 
 module.exports.loop = function () {
 
