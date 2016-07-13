@@ -7,12 +7,13 @@ module.exports = {
     harvester: function(creep){
 
         // make space for the next creep before dying
-        if(creep.ticksToLive <= 3){
+        if(creep.ticksToLive == 1){
             for(var i in Game.rooms){
                 var room = Game.rooms[i];
                 for(var j = 0; j < room.memory.sources.length; j++){
                     if(room.memory.sources[j].id == creep.memory.source){
-                        creep.room.memory.sources[j].harvesters -= 1;
+                        room.memory.sources[j].harvesters -= 1;
+                        creep.suicide();
                     }
                 }
             }
@@ -41,7 +42,6 @@ module.exports = {
                         availableSources[i] = creep.room.memory.sources[i].id;
                     }
                 }
-                console.log("length " + availableSources.length);
 
                 if(availableSources.length > 1){
                     availableSources.sort(function(a,b){
@@ -51,10 +51,9 @@ module.exports = {
 
                 creep.memory.source = availableSources[0];
                 creep.memory.target = creep.memory.source;
-                console.log("set source and target: " + creep.memory.source + " " + creep.memory.target);
 
                 for(var i = 0; i < creep.room.memory.sources.length; i++){
-                    if(creep.room.memory.sources[i].id == availableSources[0].id){
+                    if(creep.room.memory.sources[i].id == availableSources[0]){
                         creep.room.memory.sources[i].harvesters += 1;
                     }
                 }
