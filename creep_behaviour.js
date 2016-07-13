@@ -8,9 +8,12 @@ module.exports = {
 
         // make space for the next creep before dying
         if(creep.ticksToLive <= 3){
-            for(var i = 0; i < Game.rooms.sources.length; i++){
-                if(creep.room.memory.sources[i].id == creep.memory.source){
-                    creep.room.memory.sources[i].harvesters -= 1;
+            for(var i in Game.rooms){
+                var room = Game.rooms[i];
+                for(var j = 0; j < room.memory.sources.length; j++){
+                    if(room.memory.sources[j].id == creep.memory.source){
+                        creep.room.memory.sources[j].harvesters -= 1;
+                    }
                 }
             }
         }
@@ -27,17 +30,34 @@ module.exports = {
 
             // assign an energy source at the beginning
             if(typeof creep.memory.target === "undefined"){
-                var availableSources = creep.room.find(FIND_SOURCES, {
-                                    filter: src => src.harvesters < src.maxHarvesters
-                                });
+                creep.memory.source = {};
+                creep.memory.target = {};
+                //var allSources = creep.room.find(FIND_SOURCES);
+                var availableSources = [];
 
-                availableSources.sort(function(a,b){
-                    return creep.pos.getRangeTo(a) - creep.pos.getRangeTo(b);
-                });
+                for(var i = 0; i < creep.room.memory.sources.length; i++){
+                    if(creep.room.memory.sources[i].harvesters < creep.room.memory.sources[i].maxHarvesters){
+                        availableSources[i] = {};
+                        availableSources[i] = creep.room.memory.sources[i].id;
+                    }
+                }
+                console.log("length " + availableSources.length);
 
-                creep.memory.source = availableSources[0].id;
+                if(availableSources.length > 1){
+                    availableSources.sort(function(a,b){
+                        return creep.pos.getRangeTo(Game.getObjectById(a)) - creep.pos.getRangeTo(Game.getObjectById(b));
+                    });
+                }
+
+                creep.memory.source = availableSources[0];
                 creep.memory.target = creep.memory.source;
-                availableSources[0].memory.harvesters += 1;
+                console.log("set source and target: " + creep.memory.source + " " + creep.memory.target);
+
+                for(var i = 0; i < creep.room.memory.sources.length; i++){
+                    if(creep.room.memory.sources[i].id == availableSources[0].id){
+                        creep.room.memory.sources[i].harvesters += 1;
+                    }
+                }
             }
 
             // harvest energy from the source
