@@ -5,11 +5,11 @@ module.exports = {
 
             //------------------------------------------------------------------
             // general useful information
-            room.memory.maxHarvesters = 0;
 
             //------------------------------------------------------------------
             // sources
             if(!room.memory.sources){
+                room.memory.maxHarvesters = 0;
                 room.memory.sources = [];
                 var sources = room.find(FIND_SOURCES);
 
@@ -17,7 +17,7 @@ module.exports = {
                     room.memory.sources[s] = {};
                     room.memory.sources[s].id = sources[s].id;
                     room.memory.sources[s].harvesters = 0;
-                    room.memory.sources[s].maxHarvesters = 4; 
+                    room.memory.sources[s].maxHarvesters = 4;
 
                     room.memory.maxHarvesters += room.memory.sources[s].maxHarvesters;
                 }
