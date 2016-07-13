@@ -93,7 +93,7 @@ module.exports = {
     findWeakWalls : function(){
         return Game.spawns.Spawn1.room.find(FIND_STRUCTURES, {
             filter: function(obj){
-                return obj.structureType == STRUCTURE_WALL && obj.hits < 20000 && obj.hitsMax > 1;
+                return obj.structureType == STRUCTURE_WALL && obj.hits < 30000 && obj.hitsMax > 1;
             }
         });
     },
