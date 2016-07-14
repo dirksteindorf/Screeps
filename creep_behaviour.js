@@ -491,9 +491,15 @@ module.exports = {
 
         if(creep.carry.energy == 0){
             var filled_containers = structureFinder.findFilledContainers();
+
             if(filled_containers.length){
                 if(filled_containers[0].transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
                     creep.moveTo(filled_containers[0]);
+                }
+            }
+            else if(creep.room.storage.store[RESOURCE_ENERGY] > 50){
+                if(creep.room.storage.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(creep.room.storage);
                 }
             }
             else if( ( (towers[0].energy < towers[0].energyCapacity && Game.spawns.Spawn1.energy == 300) ) &&
