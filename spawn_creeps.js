@@ -48,7 +48,7 @@ module.exports = {
         // build upgraders when at least one miner is present
         else if(Memory.creepCount.upgrader < 4){
             if(Game.creeps.Miner1 && Game.spawns.Spawn1.room.controller.level >= 3 && Game.spawns.Spawn1.room.energyAvailable >= 800){
-                Game.spawns.Spawn1.createCreep([WORK, WORK, WORK, WORK, WORK, CARRY, MOVE, MOVE, MOVE, MOVE, MOVE], "upgrader"+Game.time, {role: "upgrader"});
+                Game.spawns.Spawn1.createCreep([WORK, WORK, WORK, WORK, CARRY, CARRY, CARRY, MOVE, MOVE, MOVE, MOVE], "upgrader"+Game.time, {role: "upgrader"});
             }
             else if(Game.creeps.Miner1 && Game.spawns.Spawn1.room.controller.level >= 2 && Game.spawns.Spawn1.room.energyAvailable >= 350){
                 Game.spawns.Spawn1.createCreep([WORK, WORK, MOVE, CARRY, MOVE], "upgrader"+Game.time, {role: "upgrader"});
