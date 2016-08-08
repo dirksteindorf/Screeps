@@ -112,5 +112,13 @@ module.exports = {
                 structureType : STRUCTURE_TOWER
             }
         });
+    },
+
+    findEmptyTowers : function(){
+        return Game.spawns.Spawn1.room.find(FIND_MY_STRUCTURES, {
+            filter : function(obj){
+                return obj.structureType == STRUCTURE_TOWER && obj.energy < obj.energyCapacity - 50;
+            }
+        });
     }
 }
