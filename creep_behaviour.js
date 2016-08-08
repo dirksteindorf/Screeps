@@ -489,7 +489,10 @@ module.exports = {
         var towers = structureFinder.findTowers();
         towers.sort(function(a,b){return creep.pos.getRangeTo(a)- creep.pos.getRangeTo(b);});
 
+        // get energy from different energy storages
         if(creep.carry.energy == 0){
+
+            // get energy from containers
             var filled_containers = structureFinder.findFilledContainers();
 
             if(filled_containers.length){
@@ -497,28 +500,46 @@ module.exports = {
                     creep.moveTo(filled_containers[0]);
                 }
             }
+            // get energy from storage
+            // TODO: error handling when storage is not available
             else if(creep.room.storage.store[RESOURCE_ENERGY] > 50){
                 if(creep.room.storage.transfer(creep, RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
                     creep.moveTo(creep.room.storage);
                 }
             }
+
+            // get energy from spawn
             else if( ( (towers[0].energy < towers[0].energyCapacity && Game.spawns.Spawn1.energy == 300) ) &&
                 Game.spawns.Spawn1.transferEnergy(creep) == ERR_NOT_IN_RANGE){
                 creep.moveTo(Game.spawns.Spawn1);
             }
         }
+
+        // deliver energy to different destinations
         else{
-            if(towers[0].energy == towers[0].energyCapacity){
+            var empty_towers = structureFinder.findEmptyTowers();
+
+            // towers are filled with energy
+            if(empty_towers.length == 0){
+                console.log("no tower needs energy");
                 var empty_storages = structureFinder.findEmptyEnergyStorages();
 
+                // bring energy to storage
                 if(empty_storages.length){
                     if(creep.transfer(empty_storages[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
                         creep.moveTo(empty_storages[0]);
                     }
                 }
             }
-            else if(creep.transfer(towers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
-                creep.moveTo(towers[0]);
+
+            // deliver energy to towers
+            else{
+                console.log("tower needs energy");
+                empty_towers.sort(function(a,b){return creep.pos.getRangeTo(a)- creep.pos.getRangeTo(b);});
+
+                if(creep.transfer(empty_towers[0], RESOURCE_ENERGY) == ERR_NOT_IN_RANGE){
+                    creep.moveTo(empty_towers[0]);
+                }
             }
         }
     },
