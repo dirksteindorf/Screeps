@@ -23,6 +23,19 @@ module.exports = {
                 }
             }
 
+            //------------------------------------------------------------------
+            // towers
+            if(!room.memory.towers){
+                room.memory.towers = [];
+
+                var towers = room.find(STRUCTURE_TOWER);
+
+                for(var t = 0; t < towers.length; t++){
+                    room.memory.towers[t] = {};
+                    room.memory.towers[t].id = towers[t].id;
+                    room.memory.towers[t].energyProviderID = null;
+                }
+            }
         }
     }
 }
