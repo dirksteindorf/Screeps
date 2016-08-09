@@ -84,7 +84,7 @@ module.exports = {
         else if(Game.spawns.Spawn1.room.controller.level >= 3 &&
                 Memory.creepCount.energyProvider < structureFinder.findTowers().length &&
                 Game.spawns.Spawn1.room.energyAvailable >= 200){
-            Game.spawns.Spawn1.createCreep([CARRY, CARRY, MOVE, MOVE], "energyProvider"+Game.time, {role: "energyProvider"});
+            Game.spawns.Spawn1.createCreep([CARRY, CARRY, MOVE, MOVE], "energyProvider"+Game.time, {role: "energyProvider", task: "collecting"});
         }
     }
 }
