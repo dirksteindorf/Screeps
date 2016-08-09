@@ -73,6 +73,10 @@ module.exports = {
         return (this.findEmptyExtensions()).concat(this.findEmptyContainers()).concat(this.findEmptyStorages());
     },
 
+    findFilledEnergyStorages : function(){
+        return (this.findFilledStorages()).concat(this.findFilledContainers());
+    },
+
     // this does not find containers and storages
     findDamagedStructures : function(){
         return Game.spawns.Spawn1.room.find(FIND_MY_STRUCTURES, {
