@@ -28,7 +28,9 @@ module.exports = {
             if(!room.memory.towers){
                 room.memory.towers = [];
 
-                var towers = room.find(STRUCTURE_TOWER);
+                var towers = room.find(FIND_MY_STRUCTURES, {
+                    filter: { structureType: STRUCTURE_TOWER }
+                });
 
                 for(var t = 0; t < towers.length; t++){
                     room.memory.towers[t] = {};
